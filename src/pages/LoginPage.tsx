@@ -6,20 +6,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
+import { AuthService } from '@/services/api';
 import loginBg from '@/assets/login-bg.jpg';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
-  
+
   // Validation states
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -55,15 +56,6 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (isLocked) {
-      toast({
-        title: "Account Locked",
-        description: "Too many attempts. Please try again later.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
@@ -72,37 +64,22 @@ const LoginPage = () => {
 
     setIsLoading(true);
 
-    // Simulate authentication
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Mock authentication logic
-    if (email === 'admin@crypto.com' && password === 'admin123456') {
+    try {
+      await AuthService.signin({ type: 'email', email, password });
       toast({
         title: "Authentication Successful",
         description: "Redirecting to dashboard...",
       });
-      setTimeout(() => navigate('/'), 500);
-    } else {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      
-      if (newAttempts >= 5) {
-        setIsLocked(true);
-        toast({
-          title: "Account Locked",
-          description: "Too many failed attempts. Please contact system administrator.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Authentication Failed",
-          description: `Invalid credentials. ${5 - newAttempts} attempts remaining.`,
-          variant: "destructive",
-        });
-      }
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: "Authentication Failed",
+        description: "Invalid credentials or server error.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
@@ -116,7 +93,7 @@ const LoginPage = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/60 to-transparent" />
         <div className="absolute inset-0 bg-primary/10" />
-        
+
         {/* Subtle animated glow effect */}
         <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl animate-pulse" />
         <div className="absolute top-1/3 right-1/4 w-48 h-48 bg-success/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
@@ -168,9 +145,8 @@ const LoginPage = () => {
                   }}
                   onBlur={() => validateEmail(email)}
                   placeholder="admin@company.com"
-                  className={`h-12 bg-surface border-border/50 focus:border-primary transition-all duration-200 ${
-                    emailError ? 'border-destructive focus:border-destructive' : ''
-                  }`}
+                  className={`h-12 bg-surface border-border/50 focus:border-primary transition-all duration-200 ${emailError ? 'border-destructive focus:border-destructive' : ''
+                    }`}
                   disabled={isLoading || isLocked}
                 />
               </div>
@@ -195,9 +171,8 @@ const LoginPage = () => {
                   }}
                   onBlur={() => validatePassword(password)}
                   placeholder="••••••••"
-                  className={`h-12 pr-12 bg-surface border-border/50 focus:border-primary transition-all duration-200 ${
-                    passwordError ? 'border-destructive focus:border-destructive' : ''
-                  }`}
+                  className={`h-12 pr-12 bg-surface border-border/50 focus:border-primary transition-all duration-200 ${passwordError ? 'border-destructive focus:border-destructive' : ''
+                    }`}
                   disabled={isLoading || isLocked}
                 />
                 <button
@@ -272,10 +247,10 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* Demo Credentials (remove in production) */}
+          {/* Version Info */}
           <div className="p-4 rounded-lg bg-muted/30 border border-border/30">
             <p className="text-xs text-muted-foreground text-center">
-              Demo: admin@crypto.com / admin123456
+              Afblock Admin v1.0.0
             </p>
           </div>
         </div>

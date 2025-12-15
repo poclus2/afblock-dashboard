@@ -30,3 +30,24 @@ export const WalletService = {
         return response.data;
     },
 };
+
+export interface SigninPayload {
+    type: 'email' | 'phone';
+    email?: string;
+    password: string;
+}
+
+export const AuthService = {
+    signin: async (data: SigninPayload) => {
+        const response = await api.post('/auth/signin', data);
+        return response.data;
+    },
+    logout: async () => {
+        const response = await api.delete('/auth/signout');
+        return response.data;
+    },
+    getProfile: async () => {
+        const response = await api.get('/auth/user');
+        return response.data;
+    }
+};
