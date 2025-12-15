@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import UsersPage from "./pages/UsersPage";
 import WalletsPage from "./pages/WalletsPage";
@@ -30,18 +31,18 @@ const App = () => (
           <Routes>
             {/* Login page without AdminLayout */}
             <Route path="/login" element={<LoginPage />} />
-            
+
             {/* Protected routes with AdminLayout */}
-            <Route path="/" element={<AdminLayout><Index /></AdminLayout>} />
-            <Route path="/users" element={<AdminLayout><UsersPage /></AdminLayout>} />
-            <Route path="/wallets" element={<AdminLayout><WalletsPage /></AdminLayout>} />
-            <Route path="/transactions" element={<AdminLayout><TransactionsPage /></AdminLayout>} />
-            <Route path="/p2p" element={<AdminLayout><P2PPage /></AdminLayout>} />
-            <Route path="/marketplace" element={<AdminLayout><MarketplacePage /></AdminLayout>} />
-            <Route path="/disputes" element={<AdminLayout><DisputesPage /></AdminLayout>} />
-            <Route path="/compliance" element={<AdminLayout><CompliancePage /></AdminLayout>} />
-            <Route path="/analytics" element={<AdminLayout><AnalyticsPage /></AdminLayout>} />
-            <Route path="/settings" element={<AdminLayout><SettingsPage /></AdminLayout>} />
+            <Route path="/" element={<ProtectedRoute><AdminLayout><Index /></AdminLayout></ProtectedRoute>} />
+            <Route path="/users" element={<ProtectedRoute><AdminLayout><UsersPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/wallets" element={<ProtectedRoute><AdminLayout><WalletsPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/transactions" element={<ProtectedRoute><AdminLayout><TransactionsPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/p2p" element={<ProtectedRoute><AdminLayout><P2PPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/marketplace" element={<ProtectedRoute><AdminLayout><MarketplacePage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/disputes" element={<ProtectedRoute><AdminLayout><DisputesPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/compliance" element={<ProtectedRoute><AdminLayout><CompliancePage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute><AdminLayout><AnalyticsPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><AdminLayout><SettingsPage /></AdminLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
