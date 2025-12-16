@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Wallet, 
-  ArrowLeftRight, 
-  Repeat, 
+import {
+  LayoutDashboard,
+  Users,
+  Wallet,
+  ArrowLeftRight,
+  Repeat,
   ShoppingBag,
   Scale,
   ShieldCheck,
@@ -13,21 +13,30 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Bitcoin
+  Bitcoin,
+  Construction
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
-const navigationItems = [
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: any;
+  comingSoon?: boolean;
+}
+
+const navigationItems: NavigationItem[] = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Wallet Infrastructure', href: '/wallets', icon: Wallet },
   { name: 'Transactions Ledger', href: '/transactions', icon: ArrowLeftRight },
-  { name: 'P2P Exchange', href: '/p2p', icon: Repeat },
-  { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag },
-  { name: 'Disputes & Arbitration', href: '/disputes', icon: Scale },
-  { name: 'Compliance & Risk', href: '/compliance', icon: ShieldCheck },
-  { name: 'Analytics & Reports', href: '/analytics', icon: BarChart3 },
+  { name: 'P2P Exchange', href: '/p2p', icon: Repeat, comingSoon: true },
+  { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag, comingSoon: true },
+  { name: 'Disputes & Arbitration', href: '/disputes', icon: Scale, comingSoon: true },
+  { name: 'Compliance & Risk', href: '/compliance', icon: ShieldCheck, comingSoon: true },
+  { name: 'Analytics & Reports', href: '/analytics', icon: BarChart3, comingSoon: true },
   { name: 'System Configuration', href: '/settings', icon: Settings },
 ];
 
@@ -35,8 +44,16 @@ export function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 
+  const handleComingSoonClick = (e: React.MouseEvent, itemName: string) => {
+    e.preventDefault();
+    toast({
+      title: "🚧 Coming Soon",
+      description: `${itemName} is currently under development and will be available soon.`,
+    });
+  };
+
   return (
-    <aside 
+    <aside
       className={cn(
         "fixed left-0 top-0 h-full bg-sidebar border-r border-sidebar-border transition-all duration-300 z-50 flex flex-col",
         collapsed ? "w-[72px]" : "w-64"
@@ -50,7 +67,7 @@ export function AdminSidebar() {
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-bold text-sidebar-foreground">CryptoVault</span>
+              <span className="font-bold text-sidebar-foreground">Afblock</span>
               <span className="text-xs text-muted-foreground">Admin Panel</span>
             </div>
           )}
@@ -62,14 +79,37 @@ export function AdminSidebar() {
         <ul className="space-y-1">
           {navigationItems.map((item) => {
             const isActive = location.pathname === item.href;
+
+            if (item.comingSoon) {
+              return (
+                <li key={item.name}>
+                  <button
+                    onClick={(e) => handleComingSoonClick(e, item.name)}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+                      "text-muted-foreground hover:bg-sidebar-accent cursor-pointer opacity-70"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" />
+                    {!collapsed && (
+                      <>
+                        <span className="font-medium text-sm truncate">{item.name}</span>
+                        <Construction className="h-3 w-3 ml-auto text-warning" />
+                      </>
+                    )}
+                  </button>
+                </li>
+              );
+            }
+
             return (
               <li key={item.name}>
                 <NavLink
                   to={item.href}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
-                    isActive 
-                      ? "bg-primary text-primary-foreground" 
+                    isActive
+                      ? "bg-primary text-primary-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent"
                   )}
                 >

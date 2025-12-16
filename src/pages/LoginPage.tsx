@@ -71,10 +71,15 @@ const LoginPage = () => {
         description: "Redirecting to dashboard...",
       });
       navigate('/');
-    } catch (error) {
+    } catch (err: any) {
+      console.error('Login error details:', err);
+      if (err.response) {
+        console.error('Response data:', err.response.data);
+        console.error('Response status:', err.response.status);
+      }
       toast({
         title: "Authentication Failed",
-        description: "Invalid credentials or server error.",
+        description: err.response?.data?.message || "Invalid credentials or server error.",
         variant: "destructive",
       });
     } finally {

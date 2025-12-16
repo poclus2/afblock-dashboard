@@ -1,13 +1,34 @@
+import { useState, useEffect } from 'react';
 import { UsersTable } from '@/components/users/UsersTable';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { Users, ShieldCheck, AlertTriangle, Ban } from 'lucide-react';
-import { mockUsers } from '@/data/mockData';
+import { AdminUserService, AdminUser } from '@/services/api';
 
 export default function UsersPage() {
-  const totalUsers = mockUsers.length;
-  const verifiedUsers = mockUsers.filter(u => u.verified).length;
-  const highRiskUsers = mockUsers.filter(u => u.riskScore === 'high' || u.riskScore === 'critical').length;
-  const frozenUsers = mockUsers.filter(u => u.status === 'frozen' || u.status === 'banned').length;
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const data = await AdminUserService.getAllUsers();
+        setUsers(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const totalUsers = users.length;
+  const verifiedUsers = users.filter(u => u.role === 'user').length;
+  const adminUsers = users.filter(u => u.role === 'admin').length;
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64">Loading...</div>;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -23,28 +44,28 @@ export default function UsersPage() {
           icon={<Users className="h-6 w-6" />}
         />
         <KPICard
-          title="Verified Users"
+          title="Regular Users"
           value={verifiedUsers}
-          subtitle={`${((verifiedUsers / totalUsers) * 100).toFixed(1)}% of total`}
+          subtitle={totalUsers > 0 ? `${((verifiedUsers / totalUsers) * 100).toFixed(1)}% of total` : '0%'}
           icon={<ShieldCheck className="h-6 w-6" />}
           variant="success"
         />
         <KPICard
-          title="High Risk"
-          value={highRiskUsers}
-          subtitle="Requires monitoring"
+          title="Admins"
+          value={adminUsers}
+          subtitle="Platform administrators"
           icon={<AlertTriangle className="h-6 w-6" />}
           variant="warning"
         />
         <KPICard
           title="Frozen/Banned"
-          value={frozenUsers}
+          value={0}
           icon={<Ban className="h-6 w-6" />}
           variant="destructive"
         />
       </div>
 
-      <UsersTable />
+      <UsersTable users={users} />
     </div>
   );
 }

@@ -1,13 +1,30 @@
+import { useState, useEffect } from 'react';
 import { TransactionsTable } from '@/components/transactions/TransactionsTable';
 import { KPICard } from '@/components/dashboard/KPICard';
-import { ArrowDownLeft, ArrowUpRight, Clock, CheckCircle } from 'lucide-react';
-import { mockTransactions } from '@/data/mockData';
+import { ArrowDownLeft, ArrowUpRight, Clock, CheckCircle, XCircle, Activity } from 'lucide-react';
+import { TransactionAdminService, TransactionStats } from '@/services/api';
 
 export default function TransactionsPage() {
-  const deposits = mockTransactions.filter(t => t.type === 'deposit');
-  const withdrawals = mockTransactions.filter(t => t.type === 'withdrawal');
-  const pending = mockTransactions.filter(t => t.status === 'pending' || t.status === 'confirming');
-  const completed = mockTransactions.filter(t => t.status === 'completed');
+  const [stats, setStats] = useState<TransactionStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await TransactionAdminService.getStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Error fetching transaction stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64">Loading...</div>;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -18,28 +35,28 @@ export default function TransactionsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KPICard
-          title="Deposits Today"
-          value={deposits.length}
-          icon={<ArrowDownLeft className="h-6 w-6" />}
+          title="Total Transactions"
+          value={stats?.totalTransactions || 0}
+          icon={<Activity className="h-6 w-6" />}
+        />
+        <KPICard
+          title="Completed"
+          value={stats?.completedTransactions || 0}
+          icon={<CheckCircle className="h-6 w-6" />}
           variant="success"
         />
         <KPICard
-          title="Withdrawals Today"
-          value={withdrawals.length}
-          icon={<ArrowUpRight className="h-6 w-6" />}
-        />
-        <KPICard
           title="Pending"
-          value={pending.length}
+          value={stats?.pendingTransactions || 0}
           subtitle="Awaiting confirmation"
           icon={<Clock className="h-6 w-6" />}
           variant="warning"
         />
         <KPICard
-          title="Completed"
-          value={completed.length}
-          icon={<CheckCircle className="h-6 w-6" />}
-          variant="success"
+          title="Failed"
+          value={stats?.failedTransactions || 0}
+          icon={<XCircle className="h-6 w-6" />}
+          variant="destructive"
         />
       </div>
 

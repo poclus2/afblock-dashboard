@@ -1,8 +1,9 @@
-import { 
-  Users, 
-  Wallet, 
-  TrendingUp, 
-  Clock, 
+import { useState, useEffect } from 'react';
+import {
+  Users,
+  Wallet,
+  TrendingUp,
+  Clock,
   AlertTriangle,
   DollarSign,
   ShieldCheck
@@ -13,9 +14,30 @@ import { CryptoDistributionChart } from '@/components/dashboard/CryptoDistributi
 import { PlatformTypeChart } from '@/components/dashboard/PlatformTypeChart';
 import { NewUsersChart } from '@/components/dashboard/NewUsersChart';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
-import { kpiData } from '@/data/mockData';
+import { StatsService, DashboardStats } from '@/services/api';
 
 const Index = () => {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await StatsService.getDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64">Loading...</div>;
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -28,33 +50,29 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Total Users"
-          value={kpiData.totalUsers.toLocaleString()}
-          subtitle={`${kpiData.verifiedUsersPercent}% verified`}
+          value={stats?.totalUsers?.toLocaleString() || '0'}
+          subtitle={`${stats?.verifiedUsersPercent || 0}% verified`}
           icon={<Users className="h-6 w-6" />}
-          trend={{ value: 12.5, label: 'vs last month' }}
         />
         <KPICard
           title="Custodial Funds"
-          value={`${kpiData.totalCustodialFunds.BTC.toLocaleString()} BTC`}
-          subtitle={`+${kpiData.totalCustodialFunds.ETH.toLocaleString()} ETH`}
+          value="$0"
+          subtitle="Coming soon"
           icon={<Wallet className="h-6 w-6" />}
           variant="success"
-          trend={{ value: 8.3, label: 'growth' }}
         />
         <KPICard
           title="Daily Volume"
-          value={`$${(kpiData.dailyVolume / 1000000).toFixed(2)}M`}
+          value={`$${((stats?.dailyVolume || 0) / 1000000).toFixed(2)}M`}
           subtitle="All crypto pairs"
           icon={<TrendingUp className="h-6 w-6" />}
-          trend={{ value: 23.1, label: 'vs yesterday' }}
         />
         <KPICard
           title="Platform Revenue"
-          value={`$${kpiData.platformRevenue.toLocaleString()}`}
-          subtitle="Trading fees collected"
+          value="$0"
+          subtitle="Coming soon"
           icon={<DollarSign className="h-6 w-6" />}
           variant="success"
-          trend={{ value: 15.2, label: 'this week' }}
         />
       </div>
 
@@ -62,21 +80,21 @@ const Index = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KPICard
           title="Pending Withdrawals"
-          value={kpiData.pendingWithdrawals}
+          value={stats?.pendingWithdrawals || 0}
           subtitle="Awaiting processing"
           icon={<Clock className="h-6 w-6" />}
           variant="warning"
         />
         <KPICard
           title="Open Disputes"
-          value={kpiData.openDisputes}
+          value={stats?.openDisputes || 0}
           subtitle="Requires attention"
           icon={<AlertTriangle className="h-6 w-6" />}
           variant="destructive"
         />
         <KPICard
           title="Verified Rate"
-          value={`${kpiData.verifiedUsersPercent}%`}
+          value={`${stats?.verifiedUsersPercent || 0}%`}
           subtitle="KYC completion"
           icon={<ShieldCheck className="h-6 w-6" />}
         />
