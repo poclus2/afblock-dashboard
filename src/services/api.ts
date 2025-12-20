@@ -7,6 +7,15 @@ export const api = axios.create({
     withCredentials: true, // For cookies/session
 });
 
+// Add request interceptor to include Bearer token
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 export interface Wallet {
     id: number;
     currency: {
@@ -54,9 +63,13 @@ export interface SigninPayload {
 export const AuthService = {
     signin: async (data: SigninPayload) => {
         const response = await api.post('/auth/signin', data);
+        if (response.data.token) {
+            localStorage.setItem('auth_token', response.data.token);
+        }
         return response.data;
     },
     logout: async () => {
+        localStorage.removeItem('auth_token');
         const response = await api.delete('/auth/signout');
         return response.data;
     },
