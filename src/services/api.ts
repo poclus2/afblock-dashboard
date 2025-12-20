@@ -63,6 +63,10 @@ export const AuthService = {
     getProfile: async () => {
         const response = await api.get('/auth/user');
         return response.data;
+    },
+    forgotPassword: async (email: string) => {
+        const response = await api.post('/auth/forgot-password', { email });
+        return response.data;
     }
 };
 
@@ -217,5 +221,117 @@ export const RegistrationConfigService = {
     },
     deleteGender: async (id: number): Promise<void> => {
         await api.delete(`/admin/registration-config/genders/${id}`);
+    },
+};
+
+export interface FiatFee {
+    id: number;
+    rate: number;
+    currency: {
+        id: number;
+        name: string;
+        iso_code: string;
+    };
+    transfertFiatDirection: {
+        id: number;
+        name: string;
+        description: string;
+    };
+    last_updated: string;
+}
+
+export const FeeService = {
+    getFees: async (): Promise<FiatFee[]> => {
+        const response = await api.get('/admin/transactions/fees');
+        return response.data;
+    },
+    updateFee: async (id: number, rate: number): Promise<FiatFee> => {
+        const response = await api.put(`/admin/transactions/fees/${id}`, { rate });
+        return response.data;
+    },
+    // Conversion Rates
+    getConversionRates: async (): Promise<ConversionRate[]> => {
+        const response = await api.get('/admin/transactions/conversion-rates');
+        return response.data;
+    },
+    updateConversionRate: async (id: number, rate: number, fee_percent: number): Promise<ConversionRate> => {
+        const response = await api.put(`/admin/transactions/conversion-rates/${id}`, { rate, fee_percent });
+        return response.data;
+    },
+};
+
+export interface ConversionRate {
+    id: number;
+    rate: number;
+    fee_percent: number;
+    last_updated: string;
+    from_currency: {
+        id: number;
+        iso_code: string;
+        name: string;
+    };
+    to_currency: {
+        id: number;
+        iso_code: string;
+        name: string;
+    };
+}
+
+export interface Currency {
+    id: number;
+    name: string;
+    iso_code: string;
+    is_crypto: boolean;
+    is_active: boolean;
+    description: string;
+}
+
+export const CurrencyService = {
+    getCurrencies: async (): Promise<Currency[]> => {
+        const response = await api.get('/admin/transactions/currencies');
+        return response.data;
+    },
+    toggleCurrency: async (id: number): Promise<Currency> => {
+        const response = await api.patch(`/admin/transactions/currencies/${id}/toggle`);
+        return response.data;
+    },
+    createCurrency: async (data: { name: string; description: string; iso_code: string; is_crypto: boolean }): Promise<Currency> => {
+        const response = await api.post('/admin/transactions/currencies', data);
+        return response.data;
+    },
+    deleteCurrency: async (id: number): Promise<void> => {
+        await api.delete(`/admin/transactions/currencies/${id}`);
+    },
+};
+
+export interface NotificationProvider {
+    id: number;
+    name: string;
+    type: 'EMAIL' | 'SMS';
+    credentials: any;
+    isActive: boolean;
+    rateLimit: number;
+}
+
+export const NotificationService = {
+    getProviders: async (): Promise<NotificationProvider[]> => {
+        const response = await api.get('/admin/notifications/providers');
+        return response.data;
+    },
+    updateProvider: async (id: number, data: { credentials: any; isActive: boolean; rateLimit: number }): Promise<NotificationProvider> => {
+        const response = await api.put(`/admin/notifications/providers/${id}`, data);
+        return response.data;
+    },
+    toggleProvider: async (id: number): Promise<NotificationProvider> => {
+        const response = await api.post(`/admin/notifications/providers/${id}/toggle`);
+        return response.data;
+    },
+    sendTest: async (id: number, email: string): Promise<{ success: boolean; message: string }> => {
+        const response = await api.post(`/admin/notifications/providers/${id}/test`, { email });
+        return response.data;
+    },
+    sendBroadcast: async (title: string, body: string): Promise<{ success: boolean; sent_count: number }> => {
+        const response = await api.post(`/admin/notifications/broadcast`, { title, body });
+        return response.data;
     },
 };
