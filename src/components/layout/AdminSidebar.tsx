@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -19,6 +19,8 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { AuthService } from '@/services/api';
+import { LogOut } from 'lucide-react';
 
 interface NavigationItem {
   name: string;
@@ -43,6 +45,7 @@ const navigationItems: NavigationItem[] = [
 export function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleComingSoonClick = (e: React.MouseEvent, itemName: string) => {
     e.preventDefault();
@@ -50,6 +53,22 @@ export function AdminSidebar() {
       title: "🚧 Coming Soon",
       description: `${itemName} is currently under development and will be available soon.`,
     });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AuthService.logout();
+    } catch (error) {
+      console.error("Logout failed", error);
+    } finally {
+      // Ensure local cleanup happens even if API call fails
+      localStorage.removeItem('auth_token');
+      navigate('/login');
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    }
   };
 
   return (
@@ -126,6 +145,22 @@ export function AdminSidebar() {
           })}
         </ul>
       </nav>
+
+      {/* Logout Button */}
+      <div className="px-3 pb-2">
+        <button
+          onClick={handleLogout}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+            "text-destructive hover:bg-destructive/10 cursor-pointer"
+          )}
+        >
+          <LogOut className="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" />
+          {!collapsed && (
+            <span className="font-medium text-sm truncate">Logout</span>
+          )}
+        </button>
+      </div>
 
       {/* Collapse Button */}
       <div className="p-3 border-t border-sidebar-border">
