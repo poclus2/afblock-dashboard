@@ -29,8 +29,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { AdminUser } from '@/services/api';
+import { AdminUser, AdminUserService } from '@/services/api';
 import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/components/ui/use-toast';
 
 interface UsersTableProps {
   users: AdminUser[];
@@ -46,6 +57,8 @@ const roleBadgeVariant = (role: string) => {
 
 export function UsersTable({ users }: UsersTableProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+  const { toast } = useToast();
 
   const filteredUsers = users.filter(user =>
     (user.userMeta?.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
@@ -71,115 +84,162 @@ export function UsersTable({ users }: UsersTableProps) {
     return user.wallets.reduce((sum, w) => sum + Number(w.balance || 0), 0);
   };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      await AdminUserService.deleteUser(userToDelete.id);
+      toast({
+        title: "User deleted",
+        description: `User ${userToDelete.username || userToDelete.email} has been deleted.`,
+      });
+      // Refresh logic - ideally use SWR/React Query invalidation, but reload works for now
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user. Ensure they have no active transactions.",
+        variant: "destructive",
+      });
+    } finally {
+      setUserToDelete(null);
+    }
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>All Users</CardTitle>
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search users..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>All Users</CardTitle>
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-lg border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="font-semibold">
-                  <Button variant="ghost" size="sm" className="gap-1 -ml-3">
-                    ID
-                    <ArrowUpDown className="h-3 w-3" />
-                  </Button>
-                </TableHead>
-                <TableHead className="font-semibold">Name</TableHead>
-                <TableHead className="font-semibold">Email</TableHead>
-                <TableHead className="font-semibold">Role</TableHead>
-                <TableHead className="font-semibold text-right">Balance</TableHead>
-                <TableHead className="font-semibold">Created</TableHead>
-                <TableHead className="font-semibold text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No users found
-                  </TableCell>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="font-semibold">
+                    <Button variant="ghost" size="sm" className="gap-1 -ml-3">
+                      ID
+                      <ArrowUpDown className="h-3 w-3" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="font-semibold">Name</TableHead>
+                  <TableHead className="font-semibold">Email</TableHead>
+                  <TableHead className="font-semibold">Role</TableHead>
+                  <TableHead className="font-semibold text-right">Balance</TableHead>
+                  <TableHead className="font-semibold">Created</TableHead>
+                  <TableHead className="font-semibold text-right">Actions</TableHead>
                 </TableRow>
-              ) : (
-                filteredUsers.map((user) => (
-                  <TableRow key={user.id} className="group hover:bg-muted/30 transition-colors">
-                    <TableCell className="font-mono text-sm">{user.id}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-xs font-medium text-primary">
-                            {getInitials(user)}
-                          </span>
-                        </div>
-                        <span className="font-medium">{getUserName(user)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={roleBadgeVariant(user.role || 'unknown')}>
-                        {(user.role || 'unknown').toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      ${getTotalBalance(user).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon-sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="gap-2">
-                            <Eye className="h-4 w-4" />
-                            View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
-                            <Snowflake className="h-4 w-4" />
-                            Freeze Account
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
-                            <Lock className="h-4 w-4" />
-                            Freeze Funds
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
-                            <RefreshCw className="h-4 w-4" />
-                            Force KYC Review
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive">
-                            <Ban className="h-4 w-4" />
-                            Ban User
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No users found
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id} className="group hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-mono text-sm">{user.id}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-medium text-primary">
+                              {getInitials(user)}
+                            </span>
+                          </div>
+                          <span className="font-medium">{getUserName(user)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                      <TableCell>
+                        <Badge variant={roleBadgeVariant(user.role || 'unknown')}>
+                          {(user.role || 'unknown').toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        ${getTotalBalance(user).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon-sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="gap-2">
+                              <Eye className="h-4 w-4" />
+                              View Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2">
+                              <Snowflake className="h-4 w-4" />
+                              Freeze Account
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2">
+                              <Lock className="h-4 w-4" />
+                              Freeze Funds
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2">
+                              <RefreshCw className="h-4 w-4" />
+                              Force KYC Review
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                              onSelect={() => setUserToDelete(user)}
+                            >
+                              <Ban className="h-4 w-4" />
+                              Delete User
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user account
+              <strong> {userToDelete?.email} </strong>
+              and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90">
+              Delete Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

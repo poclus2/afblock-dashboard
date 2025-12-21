@@ -118,6 +118,9 @@ export const AdminUserService = {
         const response = await api.get('/admin/users');
         return response.data;
     },
+    deleteUser: async (id: number): Promise<void> => {
+        await api.delete(`/admin/users/${id}`);
+    },
 };
 
 export interface AdminTransaction {
