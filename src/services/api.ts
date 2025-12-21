@@ -274,6 +274,10 @@ export const FeeService = {
         const response = await api.put(`/admin/transactions/conversion-rates/${id}`, { rate, fee_percent });
         return response.data;
     },
+    regenerateConversionRates: async (): Promise<{ message: string, pairsCreated: number }> => {
+        const response = await api.post('/admin/transactions/conversion-rates/regenerate');
+        return response.data;
+    },
 };
 
 export interface ConversionRate {
