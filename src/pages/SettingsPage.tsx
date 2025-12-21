@@ -23,7 +23,8 @@ import {
   X,
   Check,
   Mail,
-  MessageSquare
+  MessageSquare,
+  RefreshCw
 } from 'lucide-react';
 import { RegistrationConfigService, RegistrationConfig, Country, City, Gender, FeeService, FiatFee, NotificationService, NotificationProvider, ConversionRate, Currency, CurrencyService } from '@/services/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -704,9 +705,26 @@ export default function SettingsPage() {
                       ))}
                     </div>
                   )}
-                  <Button className="gap-2 mt-4" onClick={handleSaveRates} disabled={loadingRates}>
-                    <Save className="h-4 w-4" />Save Conversion Rates
-                  </Button>
+                  <div className="flex gap-2 mt-4">
+                    <Button className="gap-2" onClick={handleSaveRates} disabled={loadingRates}>
+                      <Save className="h-4 w-4" />Save Conversion Rates
+                    </Button>
+                    <Button variant="outline" className="gap-2" onClick={async () => {
+                      if (!confirm('This will delete all existing conversion rates and regenerate them based on active currencies. Continue?')) return;
+                      setLoadingRates(true);
+                      try {
+                        const res = await FeeService.regenerateConversionRates();
+                        toast({ title: 'Success', description: res.message });
+                        fetchRates();
+                      } catch (e) {
+                        toast({ title: 'Error', description: 'Failed to regenerate pairs', variant: 'destructive' });
+                      } finally {
+                        setLoadingRates(false);
+                      }
+                    }} disabled={loadingRates}>
+                      <RefreshCw className="h-4 w-4" />Regenerate Pairs
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
