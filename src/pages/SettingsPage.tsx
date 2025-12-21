@@ -588,7 +588,7 @@ export default function SettingsPage() {
           {/* Crypto Transfer Fees */}
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>Crypto Transfer Fees</CardTitle>
+              <CardTitle>Transfer Fees</CardTitle>
               <CardDescription>Internal user-to-user transfer fees (percentage)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -633,7 +633,7 @@ export default function SettingsPage() {
                 </div>
               )}
               <Button className="gap-2" onClick={handleSaveCryptoFees} disabled={loadingCryptoFees}>
-                <Save className="h-4 w-4" />Save Crypto Fees
+                <Save className="h-4 w-4" />Save Transfer Fees
               </Button>
             </CardContent>
           </Card>
