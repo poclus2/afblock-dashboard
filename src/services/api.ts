@@ -256,6 +256,21 @@ export interface FiatFee {
     last_updated: string;
 }
 
+export interface TransfertCryptoFee {
+    id: number;
+    fee_percent: number;
+    last_updated: string;
+    currency: {
+        id: number;
+        user_meta_id: number;
+        iso_code: string;
+        is_crypto: boolean;
+        is_active: boolean;
+        created_at: string;
+        updated_at: string;
+    }
+}
+
 export const FeeService = {
     getFees: async (): Promise<FiatFee[]> => {
         const response = await api.get('/admin/transactions/fees');
@@ -263,6 +278,15 @@ export const FeeService = {
     },
     updateFee: async (id: number, rate: number): Promise<FiatFee> => {
         const response = await api.put(`/admin/transactions/fees/${id}`, { rate });
+        return response.data;
+    },
+    // Crypto Transfer Fees
+    getTransfertCryptoFees: async (): Promise<TransfertCryptoFee[]> => {
+        const response = await api.get('/admin/transactions/fees/transfert-crypto');
+        return response.data;
+    },
+    updateTransfertCryptoFee: async (id: number, fee_percent: number): Promise<TransfertCryptoFee> => {
+        const response = await api.put(`/admin/transactions/fees/transfert-crypto/${id}`, { fee_percent });
         return response.data;
     },
     // Conversion Rates

@@ -26,7 +26,7 @@ import {
   MessageSquare,
   RefreshCw
 } from 'lucide-react';
-import { RegistrationConfigService, RegistrationConfig, Country, City, Gender, FeeService, FiatFee, NotificationService, NotificationProvider, ConversionRate, Currency, CurrencyService } from '@/services/api';
+import { RegistrationConfigService, RegistrationConfig, Country, City, Gender, FeeService, FiatFee, TransfertCryptoFee, NotificationService, NotificationProvider, ConversionRate, Currency, CurrencyService } from '@/services/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
@@ -83,16 +83,25 @@ export default function SettingsPage() {
     fetchFees();
   }, []);
 
+  const [cryptoFees, setCryptoFees] = useState<TransfertCryptoFee[]>([]);
+  const [loadingCryptoFees, setLoadingCryptoFees] = useState(false);
+
   const fetchFees = async () => {
     setLoadingFees(true);
+    setLoadingCryptoFees(true);
     try {
-      const data = await FeeService.getFees();
-      setFees(data);
+      const [fiatData, cryptoData] = await Promise.all([
+        FeeService.getFees(),
+        FeeService.getTransfertCryptoFees()
+      ]);
+      setFees(fiatData);
+      setCryptoFees(cryptoData);
     } catch (error) {
       console.error('Error fetching fees:', error);
       toast({ title: 'Error', description: 'Failed to load fees', variant: 'destructive' });
     } finally {
       setLoadingFees(false);
+      setLoadingCryptoFees(false);
     }
   };
 
@@ -103,6 +112,23 @@ export default function SettingsPage() {
       fetchFees();
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to update fee', variant: 'destructive' });
+    }
+  };
+
+  const handleSaveCryptoFees = async () => {
+    setLoadingCryptoFees(true);
+    try {
+      await Promise.all(cryptoFees.map(async (fee) => {
+        // Since we update state directly on change, we just push all current values
+        await FeeService.updateTransfertCryptoFee(fee.id, fee.fee_percent);
+      }));
+      toast({ title: 'Success', description: 'Crypto fees updated successfully' });
+      fetchFees();
+    } catch (error) {
+      console.error(error);
+      toast({ title: 'Error', description: 'Failed to update crypto fees', variant: 'destructive' });
+    } finally {
+      setLoadingCryptoFees(false);
     }
   };
 
@@ -558,6 +584,59 @@ export default function SettingsPage() {
           <Button className="gap-2" onClick={handleSaveFees} disabled={loadingFees}>
             <Save className="h-4 w-4" />Save Wallet Fees
           </Button>
+
+          {/* Crypto Transfer Fees */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Crypto Transfer Fees</CardTitle>
+              <CardDescription>Internal user-to-user transfer fees (percentage)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {loadingCryptoFees && cryptoFees.length === 0 ? (
+                <div className="text-center py-4">Loading crypto fees...</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {cryptoFees.map((fee) => (
+                    <div key={fee.id} className="space-y-2 p-4 border rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold">{fee.currency.iso_code} Transfer</span>
+                        <Badge variant={fee.currency.is_active ? "default" : "secondary"}>
+                          {fee.currency.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Fee Percentage</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={(fee.fee_percent * 100).toFixed(2)}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value);
+                              if (!isNaN(val)) {
+                                const newFees = cryptoFees.map(f =>
+                                  f.id === fee.id ? { ...f, fee_percent: val / 100 } : f
+                                );
+                                setCryptoFees(newFees);
+                              }
+                            }}
+                          />
+                          <span className="text-sm font-medium">%</span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground pt-1">
+                        Last updated: {new Date(fee.last_updated).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button className="gap-2" onClick={handleSaveCryptoFees} disabled={loadingCryptoFees}>
+                <Save className="h-4 w-4" />Save Crypto Fees
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent >
 
         {/* Unified Currencies Tab */}
