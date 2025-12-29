@@ -379,3 +379,59 @@ export const NotificationService = {
         return response.data;
     },
 };
+
+export interface KybSubmission {
+    id: string; // Enterprise ID
+    company_name: string;
+    country: string;
+    status: 'ONBOARDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED';
+    kyb_data: any;
+    created_at: string;
+    users?: {
+        id: number;
+        email: string;
+        username: string;
+    }[];
+}
+
+export const ComplianceService = {
+    getPendingKyb: async (): Promise<KybSubmission[]> => {
+        const response = await api.get('/admin/business/pending');
+        return response.data;
+    },
+    approveKyb: async (id: string): Promise<any> => {
+        const response = await api.post(`/admin/business/${id}/approve`);
+        return response.data;
+    },
+    rejectKyb: async (id: string): Promise<any> => {
+        const response = await api.post(`/admin/business/${id}/reject`);
+        return response.data;
+    },
+};
+
+export interface BusinessUser {
+    id: string;
+    email: string;
+    role: string;
+    created_at: string;
+    enterprise?: {
+        id: string;
+        company_name: string;
+        country: string;
+        status: string;
+    };
+}
+
+export const BusinessUserService = {
+    getAllBusinessUsers: async (): Promise<BusinessUser[]> => {
+        const response = await api.get('/admin/business/users');
+        return response.data;
+    },
+    getBusinessUser: async (id: string): Promise<BusinessUser> => {
+        const response = await api.get(`/admin/business/users/${id}`);
+        return response.data;
+    },
+    deleteBusinessUser: async (id: string): Promise<void> => {
+        await api.post(`/admin/business/users/${id}/delete`);
+    },
+};

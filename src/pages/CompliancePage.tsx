@@ -1,43 +1,135 @@
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { ComplianceService } from '@/services/api';
+import { useToast } from '@/components/ui/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { KPICard } from '@/components/dashboard/KPICard';
-import { 
-  ShieldCheck, 
-  AlertTriangle, 
-  Globe, 
+import {
+  ShieldCheck,
+  AlertTriangle,
+  Globe,
   FileText,
   Eye,
   Ban,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-
-const kycPending = [
-  { id: 'KYC-001', user: 'Sofia Rodriguez', level: 'basic', submitted: '2h ago', documents: 3 },
-  { id: 'KYC-002', user: 'New User 1', level: 'advanced', submitted: '5h ago', documents: 5 },
-  { id: 'KYC-003', user: 'New User 2', level: 'full', submitted: '1d ago', documents: 8 },
-];
-
-const amlFlags = [
-  { id: 'AML-001', user: 'Elena Petrova', type: 'Large Withdrawal', amount: '$25,000', risk: 'high' },
-  { id: 'AML-002', user: 'Unknown', type: 'Multiple Small Deposits', amount: '$9,500', risk: 'medium' },
-];
-
-const suspiciousPatterns = [
-  { pattern: 'Rapid buy/sell cycles', users: 3, severity: 'medium' },
-  { pattern: 'Cross-border transfers', users: 7, severity: 'low' },
-  { pattern: 'New account large deposits', users: 2, severity: 'high' },
-];
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function CompliancePage() {
+  const { toast } = useToast();
+  const [stats, setStats] = useState({
+    pending: 0,
+    amlFlags: 0,
+    verificationRate: '0%',
+    geoBlocked: 0
+  });
+
+  const [selectedKyb, setSelectedKyb] = useState<any>(null);
+
+  const { data: pendingKybs, isLoading, refetch } = useQuery({
+    queryKey: ['pendingKyb'],
+    queryFn: ComplianceService.getPendingKyb
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: ComplianceService.approveKyb,
+    onSuccess: () => {
+      toast({
+        title: "Business Approved",
+        description: "The business has been fully verified and notified.",
+        variant: 'default',
+        className: 'bg-green-500 text-white'
+      });
+      refetch();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Approval Failed",
+        description: error.response?.data?.message || "Something went wrong",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: ComplianceService.rejectKyb,
+    onSuccess: () => {
+      toast({
+        title: "Business Rejected",
+        description: "The business application has been rejected.",
+        variant: 'destructive',
+      });
+      refetch();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Action Failed",
+        description: error.response?.data?.message || "Something went wrong",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Update stats when data loads
+  if (pendingKybs && pendingKybs.length !== stats.pending) {
+    setStats(prev => ({ ...prev, pending: pendingKybs.length }));
+  }
+
+  const handleApprove = (id: string) => {
+    if (confirm('Are you sure you want to approve this business? This will create a virtual account.')) {
+      approveMutation.mutate(id);
+    }
+  };
+
+  const handleReject = (id: string) => {
+    if (confirm('Are you sure you want to reject this application?')) {
+      rejectMutation.mutate(id);
+    }
+  };
+
+  const handleOpenReview = (item: any) => {
+    setSelectedKyb(item);
+  };
+
+  const renderDocumentPreview = (url: string) => {
+    const isPdf = url.toLowerCase().endsWith('.pdf');
+    return (
+      <div className="border rounded-lg p-4 bg-muted/20">
+        <div className="mb-2 flex justify-between items-center">
+          <span className="text-sm font-medium">Document Preview</span>
+          <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+            Open in New Tab
+          </a>
+        </div>
+        {isPdf ? (
+          <iframe src={url} className="w-full h-[400px] rounded border" title="PDF Preview" />
+        ) : (
+          <img src={url} alt="Document" className="max-w-full max-h-[400px] object-contain rounded border" />
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -48,28 +140,28 @@ export default function CompliancePage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KPICard
           title="KYC Pending"
-          value={kycPending.length}
+          value={stats.pending}
           subtitle="Documents to review"
           icon={<FileText className="h-6 w-6" />}
           variant="warning"
         />
         <KPICard
           title="AML Flags"
-          value={amlFlags.length}
+          value={stats.amlFlags}
           subtitle="Active alerts"
           icon={<AlertTriangle className="h-6 w-6" />}
           variant="destructive"
         />
         <KPICard
           title="Verification Rate"
-          value="68.5%"
+          value={stats.verificationRate}
           subtitle="Users verified"
           icon={<ShieldCheck className="h-6 w-6" />}
           variant="success"
         />
         <KPICard
           title="Geo Blocked"
-          value="5"
+          value={stats.geoBlocked}
           subtitle="Restricted regions"
           icon={<Globe className="h-6 w-6" />}
         />
@@ -77,11 +169,11 @@ export default function CompliancePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* KYC Pending */}
-        <Card>
+        <Card className="col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Pending KYC Reviews
+              Pending KYB Reviews (Business)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -89,83 +181,82 @@ export default function CompliancePage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead>ID</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Level</TableHead>
-                    <TableHead>Docs</TableHead>
-                    <TableHead>Submitted</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Country</TableHead>
+                    <TableHead>Submitted By</TableHead>
+                    <TableHead>Documents</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {kycPending.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-mono text-sm">{item.id}</TableCell>
-                      <TableCell className="font-medium">{item.user}</TableCell>
-                      <TableCell>
-                        <Badge variant="pending">{item.level}</Badge>
-                      </TableCell>
-                      <TableCell>{item.documents}</TableCell>
-                      <TableCell className="text-muted-foreground">{item.submitted}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="gap-1">
-                          <Eye className="h-3 w-3" />
-                          Review
-                        </Button>
-                      </TableCell>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">Loading...</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* AML Flags */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              AML Alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-lg border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead>Alert ID</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Risk</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {amlFlags.map((flag) => (
-                    <TableRow key={flag.id}>
-                      <TableCell className="font-mono text-sm">{flag.id}</TableCell>
-                      <TableCell className="font-medium">{flag.user}</TableCell>
-                      <TableCell className="text-muted-foreground">{flag.type}</TableCell>
-                      <TableCell className="font-mono">{flag.amount}</TableCell>
-                      <TableCell>
-                        <Badge variant={flag.risk === 'high' ? 'destructive' : 'warning'}>
-                          {flag.risk}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="gap-1 text-success">
-                          <CheckCircle className="h-3 w-3" />
-                          Clear
-                        </Button>
-                        <Button variant="ghost" size="sm" className="gap-1 text-destructive">
-                          <Ban className="h-3 w-3" />
-                          Block
-                        </Button>
-                      </TableCell>
+                  ) : pendingKybs?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No pending reviews</TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    pendingKybs?.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">
+                          {item.company_name}
+                          <span className="block text-xs text-muted-foreground">ID: {item.id.substring(0, 8)}...</span>
+                        </TableCell>
+                        <TableCell>{item.country}</TableCell>
+                        <TableCell>
+                          {item.users?.[0]?.email || 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {item.kyb_data?.documents ? (
+                              <Badge variant="outline">{Object.keys(item.kyb_data.documents).length} Files</Badge>
+                            ) : (
+                              <Badge variant="secondary">0 Files</Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {new Date(item.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => handleOpenReview(item)}
+                            >
+                              <Eye className="h-3 w-3" />
+                              Review
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 text-green-600 border-green-200 hover:bg-green-50"
+                              onClick={() => handleApprove(item.id)}
+                              disabled={approveMutation.isPending}
+                            >
+                              <CheckCircle className="h-3 w-3" />
+                              Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1 text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => handleReject(item.id)}
+                              disabled={rejectMutation.isPending}
+                            >
+                              <Ban className="h-3 w-3" />
+                              Reject
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -173,34 +264,116 @@ export default function CompliancePage() {
         </Card>
       </div>
 
-      {/* Suspicious Patterns */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Detected Patterns</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {suspiciousPatterns.map((pattern, i) => (
-              <div 
-                key={i} 
-                className={`p-4 rounded-lg border ${
-                  pattern.severity === 'high' ? 'border-destructive/50 bg-destructive/5' :
-                  pattern.severity === 'medium' ? 'border-warning/50 bg-warning/5' :
-                  'border-border bg-muted/50'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant={pattern.severity === 'high' ? 'destructive' : pattern.severity === 'medium' ? 'warning' : 'secondary'}>
-                    {pattern.severity}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">{pattern.users} users</span>
+      {/* Review Dialog */}
+      <Dialog open={!!selectedKyb} onOpenChange={(open) => !open && setSelectedKyb(null)}>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <DialogTitle>KYB Review: {selectedKyb?.company_name}</DialogTitle>
+            <DialogDescription>
+              Review business details and uploaded documents.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-6">
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 sticky top-0 bg-background z-10 my-4">
+                <TabsTrigger value="details">Business Details</TabsTrigger>
+                <TabsTrigger value="documents">Documents</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="details" className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium uppercase">Company Name</label>
+                    <p className="font-medium">{selectedKyb?.company_name}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium uppercase">Country</label>
+                    <p className="font-medium">{selectedKyb?.country}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium uppercase">Registration Number</label>
+                    <p className="font-medium">{selectedKyb?.kyb_data?.registrationNumber || 'N/A'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium uppercase">Tax ID / VAT</label>
+                    <p className="font-medium">{selectedKyb?.kyb_data?.taxId || selectedKyb?.kyb_data?.vatNumber || 'N/A'}</p>
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium uppercase">Address</label>
+                    <p className="font-medium">
+                      {selectedKyb?.kyb_data?.registeredAddress}, {selectedKyb?.kyb_data?.city}, {selectedKyb?.kyb_data?.postalCode}
+                    </p>
+                  </div>
                 </div>
-                <p className="font-medium">{pattern.pattern}</p>
-              </div>
-            ))}
+
+                <div className="space-y-3 pt-4 border-t">
+                  <h4 className="font-semibold text-sm">Directors</h4>
+                  {selectedKyb?.kyb_data?.directors?.map((d: any, i: number) => (
+                    <div key={i} className="bg-muted/30 p-3 rounded-lg text-sm grid grid-cols-2 gap-2">
+                      <div><span className="text-muted-foreground">Name:</span> {d.name}</div>
+                      <div><span className="text-muted-foreground">Role:</span> {d.role}</div>
+                      <div><span className="text-muted-foreground">Email:</span> {d.email}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-3 pt-4 border-t">
+                  <h4 className="font-semibold text-sm">Shareholders</h4>
+                  {selectedKyb?.kyb_data?.shareholders?.map((s: any, i: number) => (
+                    <div key={i} className="bg-muted/30 p-3 rounded-lg text-sm flex justify-between">
+                      <div>{s.name} ({s.type})</div>
+                      <div className="font-bold">{s.ownership}%</div>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="documents" className="space-y-6 py-4">
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> Certificate of Incorporation
+                  </h4>
+                  {selectedKyb?.kyb_data?.documents?.certificate ? (
+                    renderDocumentPreview(selectedKyb.kyb_data.documents.certificate)
+                  ) : (
+                    <div className="p-8 border border-dashed rounded text-center text-muted-foreground">No certificate uploaded</div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> Articles of Association
+                  </h4>
+                  {selectedKyb?.kyb_data?.documents?.articles ? (
+                    renderDocumentPreview(selectedKyb.kyb_data.documents.articles)
+                  ) : (
+                    <div className="p-8 border border-dashed rounded text-center text-muted-foreground">No articles uploaded</div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
-        </CardContent>
-      </Card>
+
+          <DialogFooter className="border-t px-6 py-4 gap-2">
+            <Button variant="outline" onClick={() => setSelectedKyb(null)}>Close</Button>
+            <Button
+              variant="destructive"
+              onClick={() => { handleReject(selectedKyb.id); setSelectedKyb(null); }}
+              disabled={rejectMutation.isPending}
+            >
+              Reject Application
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() => { handleApprove(selectedKyb.id); setSelectedKyb(null); }}
+              disabled={approveMutation.isPending}
+            >
+              Approve Application
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

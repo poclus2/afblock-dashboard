@@ -1,34 +1,98 @@
 import { useState, useEffect } from 'react';
 import { UsersTable } from '@/components/users/UsersTable';
 import { KPICard } from '@/components/dashboard/KPICard';
-import { Users, ShieldCheck, AlertTriangle, Ban } from 'lucide-react';
-import { AdminUserService, AdminUser } from '@/services/api';
+import {
+  Users,
+  ShieldCheck,
+  AlertTriangle,
+  Ban,
+  Building,
+  MoreHorizontal,
+  Eye,
+  Trash2
+} from 'lucide-react';
+import { AdminUserService, AdminUser, BusinessUserService, BusinessUser } from '@/services/api';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function UsersPage() {
+  const [activeTab, setActiveTab] = useState('individual');
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [businessUsers, setBusinessUsers] = useState<BusinessUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userToDelete, setUserToDelete] = useState<BusinessUser | null>(null);
+  const [userToView, setUserToView] = useState<BusinessUser | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
+    fetchData();
+  }, [activeTab]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      if (activeTab === 'individual') {
         const data = await AdminUserService.getAllUsers();
         setUsers(data);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setLoading(false);
+      } else {
+        const data = await BusinessUserService.getAllBusinessUsers();
+        setBusinessUsers(data);
       }
-    };
-    fetchUsers();
-  }, []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const totalUsers = users.length;
-  const verifiedUsers = users.filter(u => u.role === 'user').length;
-  const adminUsers = users.filter(u => u.role === 'admin').length;
+  const handleDeleteBusinessUser = async () => {
+    if (!userToDelete) return;
+    try {
+      await BusinessUserService.deleteBusinessUser(userToDelete.id);
+      toast({
+        title: "User deleted",
+        description: `Business user for ${userToDelete.enterprise?.company_name} has been deleted.`,
+      });
+      fetchData(); // Refresh list
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user.",
+        variant: "destructive"
+      });
+    } finally {
+      setUserToDelete(null);
+    }
+  };
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-64">Loading...</div>;
-  }
+  const totalUsers = activeTab === 'individual' ? users.length : businessUsers.length;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -41,31 +105,158 @@ export default function UsersPage() {
         <KPICard
           title="Total Users"
           value={totalUsers.toLocaleString()}
-          icon={<Users className="h-6 w-6" />}
+          icon={activeTab === 'individual' ? <Users className="h-6 w-6" /> : <Building className="h-6 w-6" />}
         />
-        <KPICard
-          title="Regular Users"
-          value={verifiedUsers}
-          subtitle={totalUsers > 0 ? `${((verifiedUsers / totalUsers) * 100).toFixed(1)}% of total` : '0%'}
-          icon={<ShieldCheck className="h-6 w-6" />}
-          variant="success"
-        />
-        <KPICard
-          title="Admins"
-          value={adminUsers}
-          subtitle="Platform administrators"
-          icon={<AlertTriangle className="h-6 w-6" />}
-          variant="warning"
-        />
-        <KPICard
-          title="Frozen/Banned"
-          value={0}
-          icon={<Ban className="h-6 w-6" />}
-          variant="destructive"
-        />
+        {/* Simplified stats for now */}
       </div>
 
-      <UsersTable users={users} />
+      <Tabs defaultValue="individual" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="individual">Individual Users</TabsTrigger>
+          <TabsTrigger value="business">Business Users</TabsTrigger>
+        </TabsList>
+        <TabsContent value="individual">
+          {loading ? <div>Loading...</div> : <UsersTable users={users} />}
+        </TabsContent>
+        <TabsContent value="business">
+          {loading ? <div>Loading...</div> : (
+            <div className="rounded-lg border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr className="border-b">
+                    <th className="p-4 text-left font-medium">Company</th>
+                    <th className="p-4 text-left font-medium">Email</th>
+                    <th className="p-4 text-left font-medium">Country</th>
+                    <th className="p-4 text-left font-medium">Status</th>
+                    <th className="p-4 text-left font-medium">Created</th>
+                    <th className="p-4 text-right font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {businessUsers.length === 0 ? (
+                    <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No business users found</td></tr>
+                  ) : (
+                    businessUsers.map(u => (
+                      <tr key={u.id} className="border-b hover:bg-muted/30">
+                        <td className="p-4 font-medium">{u.enterprise?.company_name || 'N/A'}</td>
+                        <td className="p-4">{u.email}</td>
+                        <td className="p-4">{u.enterprise?.country}</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${u.enterprise?.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                            u.enterprise?.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                              'bg-yellow-100 text-yellow-700'
+                            }`}>
+                            {u.enterprise?.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>
+                        <td className="p-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => setUserToView(u)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Profile
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => setUserToDelete(u)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete User
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the account for
+              <strong> {userToDelete?.enterprise?.company_name} </strong>
+              and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteBusinessUser} className="bg-destructive hover:bg-destructive/90">
+              Delete Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* View Profile Modal */}
+      <Dialog open={!!userToView} onOpenChange={(open) => !open && setUserToView(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Business Profile</DialogTitle>
+            <DialogDescription>
+              User ID: {userToView?.id}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-medium mb-1">Company Name</h4>
+                <div className="p-2 border rounded-md bg-muted/50 text-sm">
+                  {userToView?.enterprise?.company_name}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-1">Country</h4>
+                <div className="p-2 border rounded-md bg-muted/50 text-sm">
+                  {userToView?.enterprise?.country}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-1">Email</h4>
+                <div className="p-2 border rounded-md bg-muted/50 text-sm">
+                  {userToView?.email}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-1">Role</h4>
+                <div className="p-2 border rounded-md bg-muted/50 text-sm">
+                  {userToView?.role}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-1">Status</h4>
+                <div className="p-2 border rounded-md bg-muted/50 text-sm">
+                  {userToView?.enterprise?.status}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-1">Join Date</h4>
+                <div className="p-2 border rounded-md bg-muted/50 text-sm">
+                  {userToView ? new Date(userToView.created_at).toLocaleString() : ''}
+                </div>
+              </div>
+            </div>
+            {/* Add more sections as needed */}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

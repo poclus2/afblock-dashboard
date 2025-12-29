@@ -37,7 +37,7 @@ const navigationItems: NavigationItem[] = [
   { name: 'P2P Exchange', href: '/p2p', icon: Repeat, comingSoon: true },
   { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag, comingSoon: true },
   { name: 'Disputes & Arbitration', href: '/disputes', icon: Scale, comingSoon: true },
-  { name: 'Compliance & Risk', href: '/compliance', icon: ShieldCheck, comingSoon: true },
+  { name: 'Compliance & Risk', href: '/compliance', icon: ShieldCheck },
   { name: 'Analytics & Reports', href: '/analytics', icon: BarChart3, comingSoon: true },
   { name: 'System Configuration', href: '/settings', icon: Settings },
 ];
