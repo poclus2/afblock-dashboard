@@ -1,6 +1,9 @@
 # Stage 1: Build
 FROM node:20-alpine AS builder
 
+# Define build argument for API URL
+ARG VITE_API_URL=https://api.afblock.dartsia.app
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -8,10 +11,8 @@ RUN npm ci
 
 COPY . .
 
-# Use production environment variables
-COPY .env.production .env
-
-RUN npm run build
+# Build with the API URL as environment variable
+RUN VITE_API_URL=$VITE_API_URL npm run build
 
 # Stage 2: Serve
 FROM nginx:alpine
