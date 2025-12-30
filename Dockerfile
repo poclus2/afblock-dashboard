@@ -7,6 +7,10 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+
+# Use production environment variables
+COPY .env.production .env
+
 RUN npm run build
 
 # Stage 2: Serve
