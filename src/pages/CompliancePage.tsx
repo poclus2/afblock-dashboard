@@ -112,19 +112,22 @@ export default function CompliancePage() {
   };
 
   const renderDocumentPreview = (url: string) => {
-    const isPdf = url.toLowerCase().endsWith('.pdf');
+    const API_URL = 'https://api.afblock.dartsia.app';
+    // Prefix with API URL if it's a relative path
+    const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`;
+    const isPdf = fullUrl.toLowerCase().endsWith('.pdf');
     return (
       <div className="border rounded-lg p-4 bg-muted/20">
         <div className="mb-2 flex justify-between items-center">
           <span className="text-sm font-medium">Document Preview</span>
-          <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+          <a href={fullUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
             Open in New Tab
           </a>
         </div>
         {isPdf ? (
-          <iframe src={url} className="w-full h-[400px] rounded border" title="PDF Preview" />
+          <iframe src={fullUrl} className="w-full h-[400px] rounded border" title="PDF Preview" />
         ) : (
-          <img src={url} alt="Document" className="max-w-full max-h-[400px] object-contain rounded border" />
+          <img src={fullUrl} alt="Document" className="max-w-full max-h-[400px] object-contain rounded border" />
         )}
       </div>
     );
