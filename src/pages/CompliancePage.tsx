@@ -112,7 +112,7 @@ export default function CompliancePage() {
   };
 
   const renderDocumentPreview = (url: string) => {
-    const API_URL = 'https://api.afblock.dartsia.app';
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     // Prefix with API URL if it's a relative path
     const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`;
     const isPdf = fullUrl.toLowerCase().endsWith('.pdf');

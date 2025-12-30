@@ -143,8 +143,9 @@ export default function UsersPage() {
                         <td className="p-4">{u.enterprise?.country}</td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${u.enterprise?.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                            u.enterprise?.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                              'bg-yellow-100 text-yellow-700'
+                              u.enterprise?.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                u.enterprise?.status === 'UNDER_REVIEW' ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-blue-100 text-blue-700' // ONBOARDING or Default
                             }`}>
                             {u.enterprise?.status}
                           </span>
