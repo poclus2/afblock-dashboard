@@ -164,7 +164,10 @@ export default function UsersPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => setUserToView(u)}>
+                              <DropdownMenuItem onClick={async () => {
+                                const fullUser = await BusinessUserService.getBusinessUser(u.id);
+                                setUserToView(fullUser);
+                              }}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Profile
                               </DropdownMenuItem>
@@ -261,7 +264,14 @@ export default function UsersPage() {
                 </div>
               </div>
             </div>
-            {/* Add more sections as needed */}
+            <div className="col-span-2">
+              <h4 className="text-sm font-medium mb-1">USD Balance (Ledger)</h4>
+              <div className="p-4 border rounded-md bg-green-50 text-green-700 font-bold text-lg">
+                {userToView?.balance !== undefined
+                  ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(userToView.balance))
+                  : 'Loading...'}
+              </div>
+            </div>
           </div>
         </DialogContent >
       </Dialog >

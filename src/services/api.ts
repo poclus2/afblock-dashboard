@@ -426,6 +426,7 @@ export interface BusinessUser {
         country: string;
         status: string;
     };
+    balance?: number;
 }
 
 export const BusinessUserService = {
