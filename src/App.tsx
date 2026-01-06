@@ -20,6 +20,7 @@ import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
 import CreateBlogPostPage from "./pages/CreateBlogPostPage";
 import BlogPage from "./pages/BlogPage";
+import DemoRequestsPage from "./pages/DemoRequestsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/compliance" element={<ProtectedRoute><AdminLayout><CompliancePage /></AdminLayout></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><AdminLayout><AnalyticsPage /></AdminLayout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><AdminLayout><SettingsPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/demo-requests" element={<ProtectedRoute><AdminLayout><DemoRequestsPage /></AdminLayout></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

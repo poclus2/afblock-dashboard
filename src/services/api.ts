@@ -464,3 +464,21 @@ export const BusinessUserService = {
         return response.data;
     },
 };
+
+export interface DemoRequest {
+    id: number;
+    enterprise_name: string;
+    country: string;
+    use_case: string;
+    business_email: string;
+    phone_number: string;
+    transaction_volume: string;
+    created_at: string;
+}
+
+export const CompanyService = {
+    getDemoRequests: async (): Promise<DemoRequest[]> => {
+        const response = await api.get('/company/demo');
+        return response.data;
+    },
+};

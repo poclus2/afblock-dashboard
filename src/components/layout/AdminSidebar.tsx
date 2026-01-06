@@ -14,9 +14,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Bitcoin,
-  Bitcoin,
   Construction,
-  Newspaper
+  Newspaper,
+  Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,7 @@ const navigationItems: NavigationItem[] = [
   { name: 'Wallet Infrastructure', href: '/wallets', icon: Wallet },
   { name: 'Transactions Ledger', href: '/transactions', icon: ArrowLeftRight },
   { name: 'Blog', href: '/blog', icon: Newspaper },
+  { name: 'Contact Forms', href: '/demo-requests', icon: Mail },
   { name: 'P2P Exchange', href: '/p2p', icon: Repeat, comingSoon: true },
   { name: 'Marketplace', href: '/marketplace', icon: ShoppingBag, comingSoon: true },
   { name: 'Disputes & Arbitration', href: '/disputes', icon: Scale, comingSoon: true },
