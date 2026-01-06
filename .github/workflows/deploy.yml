@@ -41,3 +41,24 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install sshpass
+        run: sudo apt-get install -y sshpass
+
+      - name: Deploy Dashboard
+        env:
+          SSHPASS: ${{ secrets.DO_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.DO_USERNAME }}@${{ secrets.DO_HOST }} << 'EOF'
+            cd /root/afblock
+            # Ensure we are logged in (credentials should be cached or allow public pull if public)
+            # But safer to assumption auth is needed. Backend deploy does login.
+            # We'll just try to pull.
+            docker compose -f docker-compose.prod.yml pull dashboard
+            docker compose -f docker-compose.prod.yml up -d --no-deps dashboard
+            docker image prune -f
+          EOF
