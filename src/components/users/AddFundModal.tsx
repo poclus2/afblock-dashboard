@@ -12,9 +12,10 @@ interface AddFundModalProps {
     onClose: () => void;
     userId: number | string;
     userName: string;
+    onSuccess?: () => void;
 }
 
-export function AddFundModal({ isOpen, onClose, userId, userName }: AddFundModalProps) {
+export function AddFundModal({ isOpen, onClose, userId, userName, onSuccess }: AddFundModalProps) {
     const [amount, setAmount] = useState('');
     const [currencyId, setCurrencyId] = useState('1'); // Default to USDT (1)
     const [loading, setLoading] = useState(false);
@@ -39,6 +40,7 @@ export function AddFundModal({ isOpen, onClose, userId, userName }: AddFundModal
             });
             onClose();
             setAmount('');
+            if (onSuccess) onSuccess();
         } catch (error) {
             console.error('Error crediting wallet:', error);
             toast({

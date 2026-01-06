@@ -409,8 +409,8 @@ export const ComplianceService = {
         const response = await api.post(`/admin/business/${id}/approve`);
         return response.data;
     },
-    rejectKyb: async (id: string): Promise<any> => {
-        const response = await api.post(`/admin/business/${id}/reject`);
+    rejectKyb: async (id: string, reason: string): Promise<any> => {
+        const response = await api.post(`/admin/business/${id}/reject`, { reason });
         return response.data;
     },
 };
@@ -427,6 +427,7 @@ export interface BusinessUser {
         status: string;
     };
     balance?: number;
+    is_blocked: boolean;
 }
 
 export const BusinessUserService = {
@@ -440,5 +441,26 @@ export const BusinessUserService = {
     },
     deleteBusinessUser: async (id: string): Promise<void> => {
         await api.post(`/admin/business/users/${id}/delete`);
+    },
+    toggleBlockUser: async (id: string): Promise<any> => {
+        const response = await api.post(`/admin/business/users/${id}/block`);
+        return response.data;
+    },
+    updateBusinessUserProfile: async (id: string, data: any): Promise<any> => {
+        const response = await api.put(`/admin/business/users/${id}`, data);
+        return response.data;
+    },
+    getKybHistory: async (id: string): Promise<any[]> => {
+        const response = await api.get(`/admin/business/users/${id}/kyb-history`);
+        return response.data;
+    },
+    getUserActivity: async (id: string): Promise<any[]> => {
+        const response = await api.get(`/admin/business/users/${id}/activity`);
+        return response.data;
+    },
+    // Fix reject with reason
+    rejectKyb: async (id: string, reason: string): Promise<any> => {
+        const response = await api.post(`/admin/business/${id}/reject`, { reason });
+        return response.data;
     },
 };

@@ -8,6 +8,7 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import UsersPage from "./pages/UsersPage";
+import UserDetailsPage from "./pages/UserDetailsPage";
 import WalletsPage from "./pages/WalletsPage";
 import TransactionsPage from "./pages/TransactionsPage";
 import P2PPage from "./pages/P2PPage";
@@ -35,6 +36,7 @@ const App = () => (
             {/* Protected routes with AdminLayout */}
             <Route path="/" element={<ProtectedRoute><AdminLayout><Index /></AdminLayout></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><AdminLayout><UsersPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/users/:id" element={<ProtectedRoute><AdminLayout><UserDetailsPage /></AdminLayout></ProtectedRoute>} />
             <Route path="/wallets" element={<ProtectedRoute><AdminLayout><WalletsPage /></AdminLayout></ProtectedRoute>} />
             <Route path="/transactions" element={<ProtectedRoute><AdminLayout><TransactionsPage /></AdminLayout></ProtectedRoute>} />
             <Route path="/p2p" element={<ProtectedRoute><AdminLayout><P2PPage /></AdminLayout></ProtectedRoute>} />

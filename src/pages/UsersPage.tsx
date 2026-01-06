@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { UsersTable } from '@/components/users/UsersTable';
 import { KPICard } from '@/components/dashboard/KPICard';
 import {
@@ -52,6 +53,7 @@ export default function UsersPage() {
   const [userToView, setUserToView] = useState<BusinessUser | null>(null);
   const [userToAddFund, setUserToAddFund] = useState<BusinessUser | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
@@ -164,10 +166,7 @@ export default function UsersPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={async () => {
-                                const fullUser = await BusinessUserService.getBusinessUser(u.id);
-                                setUserToView(fullUser);
-                              }}>
+                              <DropdownMenuItem onClick={() => navigate(`/users/${u.id}`)}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Profile
                               </DropdownMenuItem>
