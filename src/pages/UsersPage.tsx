@@ -9,16 +9,6 @@ import {
   Building,
   MoreHorizontal,
   Eye,
-  Trash2
-} from 'lucide-react';
-import {
-  Users,
-  ShieldCheck,
-  AlertTriangle,
-  Ban,
-  Building,
-  MoreHorizontal,
-  Eye,
   Trash2,
   Wallet
 } from 'lucide-react';
@@ -57,7 +47,6 @@ export default function UsersPage() {
   const [activeTab, setActiveTab] = useState('individual');
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [businessUsers, setBusinessUsers] = useState<BusinessUser[]>([]);
-  const [loading, setLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [userToDelete, setUserToDelete] = useState<BusinessUser | null>(null);
   const [userToView, setUserToView] = useState<BusinessUser | null>(null);
