@@ -265,6 +265,15 @@ export default function UsersPage() {
           </div>
         </DialogContent >
       </Dialog >
+
+      {userToAddFund && (
+        <AddFundModal
+          isOpen={!!userToAddFund}
+          onClose={() => setUserToAddFund(null)}
+          userId={Number(userToAddFund.id)}
+          userName={userToAddFund.enterprise?.company_name || 'Business User'}
+        />
+      )}
     </div >
   );
 }
