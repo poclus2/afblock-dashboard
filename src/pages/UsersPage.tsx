@@ -11,7 +11,19 @@ import {
   Eye,
   Trash2
 } from 'lucide-react';
+import {
+  Users,
+  ShieldCheck,
+  AlertTriangle,
+  Ban,
+  Building,
+  MoreHorizontal,
+  Eye,
+  Trash2,
+  Wallet
+} from 'lucide-react';
 import { AdminUserService, AdminUser, BusinessUserService, BusinessUser } from '@/services/api';
+import { AddFundModal } from '@/components/users/AddFundModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import {
@@ -46,8 +58,10 @@ export default function UsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [businessUsers, setBusinessUsers] = useState<BusinessUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [userToDelete, setUserToDelete] = useState<BusinessUser | null>(null);
   const [userToView, setUserToView] = useState<BusinessUser | null>(null);
+  const [userToAddFund, setUserToAddFund] = useState<BusinessUser | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -143,9 +157,9 @@ export default function UsersPage() {
                         <td className="p-4">{u.enterprise?.country}</td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${u.enterprise?.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                              u.enterprise?.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                                u.enterprise?.status === 'UNDER_REVIEW' ? 'bg-yellow-100 text-yellow-700' :
-                                  'bg-blue-100 text-blue-700' // ONBOARDING or Default
+                            u.enterprise?.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                              u.enterprise?.status === 'UNDER_REVIEW' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-blue-100 text-blue-700' // ONBOARDING or Default
                             }`}>
                             {u.enterprise?.status}
                           </span>
@@ -164,6 +178,10 @@ export default function UsersPage() {
                               <DropdownMenuItem onClick={() => setUserToView(u)}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Profile
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setUserToAddFund(u)}>
+                                <Wallet className="mr-2 h-4 w-4" />
+                                Add Funds
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -256,8 +274,8 @@ export default function UsersPage() {
             </div>
             {/* Add more sections as needed */}
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        </DialogContent >
+      </Dialog >
+    </div >
   );
 }

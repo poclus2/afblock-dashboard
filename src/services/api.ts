@@ -44,6 +44,12 @@ export const WalletService = {
     },
 };
 
+export const AdminWalletService = {
+    creditWallet: async (userId: number, currencyId: number, amount: number): Promise<void> => {
+        await api.post('/admin/wallets/credit', { userId, currencyId, amount });
+    },
+};
+
 export interface WalletStats {
     totalWallets: number;
     cryptoWallets: number;
