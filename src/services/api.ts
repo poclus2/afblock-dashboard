@@ -45,7 +45,7 @@ export const WalletService = {
 };
 
 export const AdminWalletService = {
-    creditWallet: async (userId: number, currencyId: number, amount: number): Promise<void> => {
+    creditWallet: async (userId: number | string, currencyId: number, amount: number): Promise<void> => {
         await api.post('/admin/wallets/credit', { userId, currencyId, amount });
     },
 };

@@ -10,7 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 interface AddFundModalProps {
     isOpen: boolean;
     onClose: () => void;
-    userId: number;
+    userId: number | string;
     userName: string;
 }
 

@@ -270,7 +270,7 @@ export default function UsersPage() {
         <AddFundModal
           isOpen={!!userToAddFund}
           onClose={() => setUserToAddFund(null)}
-          userId={Number(userToAddFund.id)}
+          userId={userToAddFund.id}
           userName={userToAddFund.enterprise?.company_name || 'Business User'}
         />
       )}
