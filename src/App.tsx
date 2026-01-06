@@ -18,6 +18,8 @@ import CompliancePage from "./pages/CompliancePage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
+import CreateBlogPostPage from "./pages/CreateBlogPostPage";
+import BlogPage from "./pages/BlogPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +41,9 @@ const App = () => (
             <Route path="/users/:id" element={<ProtectedRoute><AdminLayout><UserDetailsPage /></AdminLayout></ProtectedRoute>} />
             <Route path="/wallets" element={<ProtectedRoute><AdminLayout><WalletsPage /></AdminLayout></ProtectedRoute>} />
             <Route path="/transactions" element={<ProtectedRoute><AdminLayout><TransactionsPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/blog" element={<ProtectedRoute><AdminLayout><BlogPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/blog/create" element={<ProtectedRoute><AdminLayout><CreateBlogPostPage /></AdminLayout></ProtectedRoute>} />
+            <Route path="/blog/edit/:id" element={<ProtectedRoute><AdminLayout><CreateBlogPostPage /></AdminLayout></ProtectedRoute>} />
             <Route path="/p2p" element={<ProtectedRoute><AdminLayout><P2PPage /></AdminLayout></ProtectedRoute>} />
             <Route path="/marketplace" element={<ProtectedRoute><AdminLayout><MarketplacePage /></AdminLayout></ProtectedRoute>} />
             <Route path="/disputes" element={<ProtectedRoute><AdminLayout><DisputesPage /></AdminLayout></ProtectedRoute>} />
